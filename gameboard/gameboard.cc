@@ -4,111 +4,109 @@
 #include <random>
 
 namespace {
-bool isAdjacent(const GameBoard::Position f, const GameBoard::Position s) {
-    if (f == s) {
-        return false;
+bool isAdjacent(const GameBoard::Position first,
+                const GameBoard::Position second) {
+  if (first == second) {
+    return false;
+  }
+
+  const auto calc_distance = [](size_t pos1, size_t pos2) {
+    int distance = static_cast<int>(pos1);
+    distance -= static_cast<int>(pos2);
+    distance = std::abs(distance);
+    return distance;
+  };
+
+  bool result{false};
+
+  if (first.first == second.first) {
+    int distance = calc_distance(first.second, second.second);
+    if (distance == 1) {
+      result = true;
     }
-
-    const auto calcDistance = [](const size_t pos_1, size_t pos_2) {
-        int distance = static_cast<int>(pos_1);
-        distance -= static_cast<int>(pos_2);
-        distance = std::abs(distance);
-        return distance;
-    };
-
-    bool result {false};
-
-    if (f.first == s.second) {
-        int distance = calcDistance(f.second, s.second);
-
-        if (distance == 1) {
-            result = true;
-        }
-    } else if (f.second == s.second) {
-        int distance = calcDistance(f.first, s.first);
-
-        if (distance == 1) {
-            result = true;
-        }
+  } else if (first.second == second.second) {
+    int distance = calc_distance(first.first, second.first);
+    if (distance == 1) {
+      result = true;
     }
-    return result;
+  }
+
+  return result;
 }
-}
+}  // namespace
 
 GameBoard::GameBoard(const size_t dimension, QObject *parent)
-    : QAbstractListModel{parent}
-    , m_dimension{dimension}
-    , m_board_size{m_dimension * m_dimension} {
-    m_raw_board.resize(m_board_size);
-    std::iota(m_raw_board.begin(), m_raw_board.end(), 1);
-    Shuffle();
+    : QAbstractListModel{parent},
+      m_dimension{dimension},
+      m_board_size{m_dimension * m_dimension} {
+  m_raw_board.resize(m_board_size);
+  std::iota(m_raw_board.begin(), m_raw_board.end(), 1);
+  Shuffle();
 }
 
 int GameBoard::rowCount(const QModelIndex &parent) const {
-    Q_UNUSED(parent);
+  Q_UNUSED(parent);
 
-    return m_raw_board.size();
+  return m_raw_board.size();
 }
 
 QVariant GameBoard::data(const QModelIndex &index, int role) const {
-    if (!index.isValid() || role != Qt::DisplayRole) {
-        return QVariant();
-    }
+  if (!index.isValid() || role != Qt::DisplayRole) {
+    return QVariant();
+  }
 
-    const int row_index {index.row()};
+  const auto row_index{static_cast<size_t>(index.row())};
 
-    if (!isPositionValid(row_index)) {
-        return QVariant();
-    }
+  if (!isPositionValid(row_index)) {
+    return QVariant();
+  }
 
-    return QVariant::fromValue(m_raw_board[row_index].value);
+  return QVariant(static_cast<int>(m_raw_board[row_index].value));
 }
 
 bool GameBoard::move(int index) {
-    if (isPositionValid(static_cast<size_t>(index))) {
-        return false;
-    }
-    const Position element_pos{get_row_col(index)};
+  if (!isPositionValid(static_cast<size_t>(index))) {
+    return false;
+  }
 
-    auto hidden_element_it = std::find(m_raw_board.begin(), m_raw_board.end(), board_size());
+  Position positionOfIndex{get_row_col(index)};
 
-    Q_ASSERT(hidden_element_it != m_raw_board.end());
+  auto hiddenElementIterator =
+      std::find(m_raw_board.begin(), m_raw_board.end(), m_board_size);
 
-    Position hidden_element_pos{get_row_col(std::distance(m_raw_board.begin(), hidden_element_it))};
+  Q_ASSERT(hiddenElementIterator != m_raw_board.end());
+  Position hiddenElementPosition{
+      get_row_col(std::distance(m_raw_board.begin(), hiddenElementIterator))};
 
-    if (!isAdjacent(element_pos, hidden_element_pos)) {
-        return false;
-    }
+  if (!isAdjacent(positionOfIndex, hiddenElementPosition)) {
+    return false;
+  }
 
-    std::swap(hidden_element_it->value, m_raw_board[index].value);
-    emit dataChanged(createIndex(0, 0), createIndex(m_board_size, 0));
-
-    return true;
+  std::swap(hiddenElementIterator->value, m_raw_board[index].value);
+  emit dataChanged(createIndex(0, 0), createIndex(m_board_size, 0));
+  return true;
 }
 
-size_t GameBoard::dimension() const {
-    return m_dimension;
-}
+size_t GameBoard::dimension() const { return m_dimension; }
 
-size_t GameBoard::board_size() const {
-    return m_board_size;
-}
+size_t GameBoard::board_size() const { return m_board_size; }
 
 GameBoard::Position GameBoard::get_row_col(const size_t index) const {
-    Q_ASSERT(m_dimension > 0);
-    size_t row = index / m_dimension;
-    size_t col = index % m_dimension;
+  Q_ASSERT(m_dimension > 0);
+  size_t row = index / m_dimension;
+  size_t col = index % m_dimension;
 
-    return std::make_pair(row, col);
+  return std::make_pair(row, col);
 }
 
 void GameBoard::Shuffle() {
-    static auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    static std::mt19937 generator(seed);
+  static auto seed =
+      std::chrono::system_clock::now().time_since_epoch().count();
+  static std::mt19937 generator(seed);
 
-    std::shuffle(m_raw_board.begin(), --m_raw_board.end(), generator);
+  std::shuffle(m_raw_board.begin(), --m_raw_board.end(), generator);
 }
 
 bool GameBoard::isPositionValid(const size_t position) const {
-    return position < m_board_size;
+  return position < m_board_size;
 }

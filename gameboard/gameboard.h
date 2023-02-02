@@ -30,7 +30,7 @@ public:
     virtual int rowCount(const QModelIndex & parent = QModelIndex {}) const override;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 
-    bool move(int index);
+    Q_INVOKABLE bool move(int index);
 
     size_t dimension() const;
     size_t board_size() const;
