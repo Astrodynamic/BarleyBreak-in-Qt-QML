@@ -20,15 +20,23 @@ GridView {
     visible: display != root.model.board_size
 
     Block {
+      id: _block
       displayText: display
       anchors.fill: _background_delegate
       anchors.margins: 5
 
       MouseArea {
+        id: _mouseArea
         anchors.fill: parent
         onClicked: {
           root.model.move(index)
         }
+      }
+
+      ScaleAnimator on scale {
+        from: 0.5
+        to: 1
+        duration: 3000
       }
     }
   }

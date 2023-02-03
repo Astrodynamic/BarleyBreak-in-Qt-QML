@@ -11,7 +11,7 @@ class GameBoard : public QAbstractListModel {
 public:
     using Position = std::pair<size_t, size_t>;
 
-    static constexpr size_t kDefaultPuzzleDimension {4 };
+    static constexpr size_t kDefaultPuzzleDimension {6};
     GameBoard(const size_t dimension = kDefaultPuzzleDimension, QObject * parent = nullptr);
 
     struct Block {
@@ -44,7 +44,7 @@ private:
     void Shuffle();
     bool isPositionValid(const size_t position) const;
 
-    Position get_row_col(const size_t index) const;
+    Position GetRowCol(const size_t index) const;
 };
 
 #endif // GAMEBOARD_H

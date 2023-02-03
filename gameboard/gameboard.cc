@@ -69,14 +69,12 @@ bool GameBoard::move(int index) {
     return false;
   }
 
-  Position positionOfIndex{get_row_col(index)};
+  Position positionOfIndex{GetRowCol(index)};
 
-  auto hiddenElementIterator =
-      std::find(m_raw_board.begin(), m_raw_board.end(), m_board_size);
+  auto hiddenElementIterator = std::find(m_raw_board.begin(), m_raw_board.end(), m_board_size);
 
   Q_ASSERT(hiddenElementIterator != m_raw_board.end());
-  Position hiddenElementPosition{
-      get_row_col(std::distance(m_raw_board.begin(), hiddenElementIterator))};
+  Position hiddenElementPosition{GetRowCol(std::distance(m_raw_board.begin(), hiddenElementIterator))};
 
   if (!isAdjacent(positionOfIndex, hiddenElementPosition)) {
     return false;
@@ -91,7 +89,7 @@ size_t GameBoard::dimension() const { return m_dimension; }
 
 size_t GameBoard::board_size() const { return m_board_size; }
 
-GameBoard::Position GameBoard::get_row_col(const size_t index) const {
+GameBoard::Position GameBoard::GetRowCol(const size_t index) const {
   Q_ASSERT(m_dimension > 0);
   size_t row = index / m_dimension;
   size_t col = index % m_dimension;
@@ -100,8 +98,7 @@ GameBoard::Position GameBoard::get_row_col(const size_t index) const {
 }
 
 void GameBoard::Shuffle() {
-  static auto seed =
-      std::chrono::system_clock::now().time_since_epoch().count();
+  static auto seed = std::chrono::system_clock::now().time_since_epoch().count();
   static std::mt19937 generator(seed);
 
   std::shuffle(m_raw_board.begin(), --m_raw_board.end(), generator);
