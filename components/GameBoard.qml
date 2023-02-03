@@ -30,13 +30,16 @@ GridView {
         anchors.fill: parent
         onClicked: {
           root.model.move(index)
+          _block_scale.running = true
         }
       }
 
-      ScaleAnimator on scale {
-        from: 0.5
-        to: 1
-        duration: 3000
+      ScaleAnimator {
+        id: _block_scale
+        target: _block
+        from: 0.9
+        to: 1.0
+        duration: 1000
       }
     }
   }
