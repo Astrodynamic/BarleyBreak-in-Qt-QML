@@ -1,4 +1,4 @@
-# BarleyBreak
+# BarleyBreak in Qt/QML
 
 ![BarleyBreak Logo](img/promo.gif)
 
