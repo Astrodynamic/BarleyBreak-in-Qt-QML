@@ -1,29 +1,42 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 
-project(TEST VERSION 1.0 LANGUAGES CXX)
+project(BarleyBreak VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 6.2 COMPONENTS Quick REQUIRED)
 
 include_directories(
-  ${CMAKE_SOURCE_DIR}/gameboard
+    ${CMAKE_SOURCE_DIR}/gameboard
+)
+
+set(HEADERS
+    ${CMAKE_SOURCE_DIR}/gameboard/gameboard.h
+)
+
+set(SOURCES
+    ${CMAKE_SOURCE_DIR}/gameboard/gameboard.cc
+)
+
+set(PROJECT_SOURCES
+    ${HEADERS}
+    ${SOURCES}
+    ${CMAKE_SOURCE_DIR}/main.cc
 )
 
 qt_add_executable(${PROJECT_NAME}
-    main.cc
-    gameboard/gameboard.h
-    gameboard/gameboard.cc
+    ${PROJECT_SOURCES}
 )
 
 qt_add_qml_module(${PROJECT_NAME}
     URI ${PROJECT_NAME}
     VERSION 1.0
     QML_FILES
-    components/Application.qml
-    components/GameBoard.qml
-    components/Block.qml
+    ${CMAKE_SOURCE_DIR}/components/Application.qml
+    ${CMAKE_SOURCE_DIR}/components/GameBoard.qml
+    ${CMAKE_SOURCE_DIR}/components/Block.qml
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -37,5 +50,63 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 
+target_compile_options(
+    ${PROJECT_NAME}
+    PRIVATE
+    -Wall
+    -Werror
+    -Wextra
+    -Wpedantic
+    -Wno-sign-compare
+    -fsanitize=address
+)
+
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE Qt6::Quick)
+    PRIVATE Qt6::Quick
+    -fsanitize=address
+)
+
+# Add cppcheck
+find_program(CPPCHECK cppcheck)
+
+if(CPPCHECK)
+    message(STATUS "cppcheck found: ${CPPCHECK}")
+    list(
+        APPEND CPPCHECK_ARGS
+        "--enable=all"
+        "--inconclusive"
+        "--quiet"
+        "--language=c++"
+        "--std=c++17"
+        "--suppress=unusedFunction"
+        "--suppress=missingInclude"
+        "--suppress=functionStatic"
+        "--suppress=invalidScanfArgType_int"
+        "--verbose"
+    )
+    add_custom_target(
+        cppcheck
+        COMMAND ${CPPCHECK} ${CPPCHECK_ARGS} ${HEADERS} ${SOURCES}
+    )
+else()
+    message(STATUS "cppcheck not found")
+endif()
+
+# Add clang-format
+find_program(CLANG_FORMAT clang-format)
+
+if(CLANG_FORMAT)
+    message(STATUS "clang-format found: ${CLANG_FORMAT}")
+    list(
+        APPEND CLANG_ARGS
+        "-n"
+        "-style=Google"
+        "--verbose"
+    )
+    add_custom_target(
+        clang-format
+        COMMAND ${CLANG_FORMAT} ${CLANG_ARGS} ${HEADERS} ${SOURCES}
+    )
+else()
+    message(STATUS "clang-format not found")
+endif()
